@@ -1,2 +1,2 @@
-# 2semsestr
+# 2 semestr
 #10 variant
