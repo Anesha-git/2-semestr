@@ -1,0 +1,97 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+class Shape {
+public:
+    std::string type;
+    int x, y;
+    Shape(std::string t, int x, int y) : type(t), x(x), y(y) {}
+};
+
+class GraphicsRenderer {
+public:
+    virtual void draw(const Shape& shape) = 0;
+    virtual void clear() = 0;
+    virtual void update() = 0;
+    virtual ~GraphicsRenderer() {}
+};
+
+class Transform {
+public:
+    int dx, dy;
+    double scale;
+    Transform(int x, int y, double s) : dx(x), dy(y), scale(s) {}
+    Shape apply(const Shape& s) {
+        return Shape(s.type, s.x * scale + dx, s.y * scale + dy);
+    }
+};
+
+class RasterRenderer : public GraphicsRenderer {
+    std::string buffer;
+public:
+    void draw(const Shape& shape) override {
+        buffer += "Raster " + shape.type + " at (" + 
+                  std::to_string(shape.x) + "," + std::to_string(shape.y) + ")\n";
+    }
+    void clear() override { buffer.clear(); }
+    void update() override { std::cout << buffer; }
+};
+
+class VectorRenderer : public GraphicsRenderer {
+    std::string buffer;
+public:
+    void draw(const Shape& shape) override {
+        buffer += "Vector " + shape.type + " at (" + 
+                  std::to_string(shape.x) + "," + std::to_string(shape.y) + ")\n";
+    }
+    void clear() override { buffer.clear(); }
+    void update() override { std::cout << buffer; }
+};
+
+class Scene {
+    std::vector<Shape> shapes;
+    Transform* transform;
+    GraphicsRenderer* renderer;
+public:
+    Scene(GraphicsRenderer* r) : renderer(r), transform(nullptr) {}
+    
+    void addShape(const Shape& s) { shapes.push_back(s); }
+    void setTransform(Transform* t) { transform = t; }
+    
+    void render() {
+        renderer->clear();
+        for (auto& s : shapes) {
+            if (transform) renderer->draw(transform->apply(s));
+            else renderer->draw(s);
+        }
+        renderer->update();
+    }
+};
+
+int main() {
+    RasterRenderer raster;
+    VectorRenderer vector;
+    
+    Scene scene1(&raster);
+    Scene scene2(&vector);
+    
+    Shape circle("circle", 10, 20);
+    Shape square("square", 30, 40);
+    
+    scene1.addShape(circle);
+    scene1.addShape(square);
+    scene2.addShape(circle);
+    scene2.addShape(square);
+    
+    Transform move(5, 5, 1.5);
+    
+    std::cout << "Raster scene:\n";
+    scene1.render();
+    
+    std::cout << "\nVector scene with transform:\n";
+    scene2.setTransform(&move);
+    scene2.render();
+    
+    return 0;
+}
