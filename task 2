@@ -1,0 +1,78 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
+class Employee {
+protected:
+    std::string id;
+    std::string name;
+    double salary;
+    int rating; // 1-5
+public:
+    Employee(std::string i, std::string n, double s) : id(i), name(n), salary(s), rating(3) {}
+    virtual ~Employee() {}
+    virtual void work() = 0;
+    virtual double bonus() { return salary * 0.1 * rating; }
+    void setRating(int r) { if(r>=1 && r<=5) rating = r; }
+    std::string getName() { return name; }
+    double getSalary() { return salary; }
+    void raise(double s) { salary += s; }
+};
+
+class Developer : public Employee {
+public:
+    Developer(std::string i, std::string n, double s) : Employee(i, n, s) {}
+    void work() override { std::cout << name << " пишет код\n"; }
+    double bonus() override { return salary * 0.15 * rating; }
+};
+
+class Manager : public Employee {
+public:
+    Manager(std::string i, std::string n, double s) : Employee(i, n, s) {}
+    void work() override { std::cout << name << " управляет\n"; }
+    double bonus() override { return salary * 0.2 * rating; }
+};
+
+class HR : public Employee {
+public:
+    HR(std::string i, std::string n, double s) : Employee(i, n, s) {}
+    void work() override { std::cout << name << " нанимает\n"; }
+};
+
+class PersonnelManager {
+    std::vector<Employee*> emps;
+public:
+    void add(Employee* e) { emps.push_back(e); }
+    void rate(std::string id, int r) {
+        for(auto e : emps) {
+            if(e->getName() == id) {
+                e->setRating(r);
+                if(r >= 4) e->raise(1000);
+                std::cout << "Оценено\n";
+                return;
+            }
+        }
+    }
+    void show() {
+        for(auto e : emps) 
+            std::cout << e->getName() << " " << e->getSalary() << "\n";
+    }
+    void calcBonuses() {
+        for(auto e : emps) 
+            std::cout << e->getName() << " бонус: " << e->bonus() << "\n";
+    }
+    ~PersonnelManager() { for(auto e : emps) delete e; }
+};
+
+int main() {
+    PersonnelManager pm;
+    pm.add(new Developer("1", "Иван", 5000));
+    pm.add(new Manager("2", "Петр", 7000));
+    pm.add(new HR("3", "Анна", 4000));
+    
+    pm.show();
+    pm.rate("Иван", 5);
+    pm.calcBonuses();
+    
+    for(auto e : {pm}) e.work(); // просто чтобы вызвать work()
+}
